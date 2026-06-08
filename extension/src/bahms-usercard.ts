@@ -23,12 +23,12 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const RARITY_ORDER: Record<string, number> = {
-  LEGENDARY: 0,
-  EPIC: 1,
-  RARE: 2,
-  UNCOMMON: 3,
-  COMMON: 4,
-  UNSET: 5,
+  UNSET: 0,
+  COMMON: 1,
+  UNCOMMON: 2,
+  RARE: 3,
+  EPIC: 4,
+  LEGENDARY: 5,
 };
 
 let badgePopoverInstance: HTMLElement | null = null;
@@ -367,7 +367,7 @@ function buildFishingPanel(caughtFish: BahmsCaughtFish[]): HTMLElement {
   const sortedGroups = groupList.sort((a, b) => {
     if (a.fish.id === mostRecentId) return -1;
     if (b.fish.id === mostRecentId) return 1;
-    return (RARITY_ORDER[a.fish.rarity] ?? 5) - (RARITY_ORDER[b.fish.rarity] ?? 5);
+    return (RARITY_ORDER[b.fish.rarity] ?? -1) - (RARITY_ORDER[a.fish.rarity] ?? -1);
   });
 
   const list = document.createElement("div");

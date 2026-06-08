@@ -4,7 +4,7 @@
   "description": "Display BAHMS stats in Twitch user cards",
   "version": "1.0.0",
   "permissions": ["storage"],
-  "action": { "default_popup": "popup.html", "default_title": "B.A.H.M.S. User Info", "default_icon": "assets/favicon.svg" },
+  "action": { "default_popup": "popup.html", "default_title": "B.A.H.M.S. User Info", "default_icon": "assets/logo_128x128.png" },
   "host_permissions": ["https://*.twitch.tv/*", "https://api.bahms.org/*"],
   "content_scripts": [
     {
