@@ -52,21 +52,27 @@ jobs:
 
       - name: Publish to Web Store (Chrome)
         if: github.event_name == 'push'
-        run: npx chrome-webstore-upload-cli@latest --source chrome.zip --extension-id ${{ secrets.CHROME_EXTENSION_ID }}
-        env:
-          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+        uses: maoserr/chrome_extension_publish@v1.0.3
+        with:
+          chrome_extension_id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client_id: ${{ secrets.CHROME_CLIENT_ID }}
+          refresh_token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          client_secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          file: chrome.zip
+
+      - name: Zip source (Firefox)
+        run: zip -r src.zip extension -x "extension/node_modules/*" -x "extension/dist/*"
 
       - name: Sign & submit (FireFox)
         if: github.event_name == 'push'
-        run: |
-          npx web-ext sign \
-            --source-dir extension/dist \
-            --api-key ${{ secrets.FIREFOX_API_ISSUER }} \
-            --api-secret ${{ secrets.FIREFOX_API_SECRET }} \
-            --channel listed
+        uses: maoserr/firefox_extension_publish@v1.0.4
+        with:
+          firefox_extension_id: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          api_key: ${{ secrets.FIREFOX_API_ISSUER }}
+          api_secret: ${{ secrets.FIREFOX_API_SECRET }}
+          file: firefox.zip
+          src_file: src.zip
+
 
       - name: Create GitHub release
         if: github.event_name == 'push'
