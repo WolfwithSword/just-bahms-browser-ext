@@ -121,11 +121,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  position: relative;
 }
 
 .bahms-tab-duel-indicator {
-  margin-left: auto;
+  position: absolute;
+  right: 5px;
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
