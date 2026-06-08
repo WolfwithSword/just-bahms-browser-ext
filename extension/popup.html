@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>B.A.H.M.S. User Info</title>
+    <link rel="icon" href="assets/favicon.svg" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #1a1625;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 16px;
+      }
+
+      .container {
+        width: 400px;
+        background-color: #252033;
+        border-radius: 8px;
+        box-shadow:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .header-logo {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+      }
+
+      h1 {
+        color: #deadff;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        line-height: 1.3;
+      }
+
+      .options {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.5;
+        color: #e0e7ff;
+        width: 100%;
+      }
+
+      .option-label {
+        display: flex;
+        gap: 12px;
+        cursor: pointer;
+        align-items: center;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #deadff;
+      }
+
+      .spacer {
+        height: 1px;
+        background-color: rgba(222, 173, 255, 0.25);
+        margin-left: 12px;
+        margin-right: 12px;
+      }
+
+      .thanks {
+        text-align: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        color: #d8b4fe;
+        font-size: 14px;
+        font-weight: 400;
+      }
+
+      .person {
+        font-weight: 700;
+        flex: 1;
+        color: #d8b4fe;
+      }
+
+      .bahms-settings-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #d8b4fe;
+        letter-spacing: 0.5px;
+      }
+
+      .bahms-channel-manager {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0 4px;
+      }
+
+      .bahms-channels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 24px;
+      }
+
+      .bahms-channel-chip {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(222, 173, 255, 0.12);
+        border: 1px solid rgba(222, 173, 255, 0.3);
+        border-radius: 12px;
+        padding: 3px 8px;
+        font-size: 13px;
+        color: #d8b4fe;
+      }
+
+      .bahms-channel-remove {
+        background: none;
+        border: none;
+        color: rgba(222, 173, 255, 0.5);
+        cursor: pointer;
+        font-size: 15px;
+        line-height: 1;
+        padding: 0;
+      }
+
+      .bahms-channel-remove:hover {
+        color: #ef5350;
+      }
+
+      .bahms-add-channel {
+        display: flex;
+        gap: 6px;
+      }
+
+      .bahms-channel-input {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(222, 173, 255, 0.3);
+        border-radius: 6px;
+        padding: 5px 10px;
+        color: #e0e7ff;
+        font-size: 13px;
+        flex: 1;
+        outline: none;
+        font-family: inherit;
+      }
+
+      .bahms-channel-input:focus {
+        border-color: #deadff;
+      }
+
+      .bahms-add-btn {
+        background: rgba(222, 173, 255, 0.15);
+        border: 1px solid rgba(222, 173, 255, 0.35);
+        border-radius: 6px;
+        color: #d8b4fe;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 5px 14px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .bahms-add-btn:hover {
+        background: rgba(222, 173, 255, 0.25);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="assets/favicon.svg" class="header-logo" alt="BAHMS logo" />
+        <h1>B.A.H.M.S. User Info</h1>
+      </div>
+
+      <div class="options">
+        <div class="bahms-settings-title">Channel Settings</div>
+
+        <label class="option-label" title="Show BAHMS stats card on all channels, not just selected ones">
+          <input type="checkbox" id="bahmsAllChannels" />
+          <span>Show in all channels</span>
+        </label>
+
+        <div id="bahms-channel-manager" class="bahms-channel-manager">
+          <div id="bahms-channels" class="bahms-channels"></div>
+          <div class="bahms-add-channel">
+            <input type="text" class="bahms-channel-input" id="bahmsChannelInput" placeholder="Add channel name..." />
+            <button class="bahms-add-btn" id="bahmsAddChannel">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div style="text-align: center;">
+        <a href="https://bahms.org" target="_blank" rel="noopener noreferrer" style="color: #deadff; font-size: 13px; font-weight: 600; text-decoration: none; letter-spacing: 0.3px;">Visit bahms.org</a>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="thanks">
+        <div style="flex: 1">Made By</div>
+        <div style="flex: 1">Template code from</div>
+
+        <div style="flex-basis: 100%; height: 0"></div>
+        <a class="person" href="https://github.com/WolfwithSword" target="_blank">WolfwithSword</a>
+        <a class="person" href="https://github.com/minasona-extension/community" target="_blank">HellPing</a>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,97 @@
+name: Build & Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+
+      - name: Install dependencies
+        run: cd extension && npm install
+
+      - name: Build (Chrome)
+        run: cd extension && node build.js chrome
+
+      - name: Set version in Chrome manifest
+        if: github.event_name == 'push'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.version = $v' extension/dist/manifest.json > tmp.json
+          mv tmp.json extension/dist/manifest.json
+
+      - name: Zip Chrome dist
+        run: zip -r chrome.zip extension/dist/
+
+      - name: Build (Firefox)
+        run: cd extension && node build.js firefox
+
+      - name: Set version in Firefox manifest
+        if: github.event_name == 'push'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.version = $v' extension/dist/manifest.json > tmp.json
+          mv tmp.json extension/dist/manifest.json
+
+      - name: Zip Firefox dist
+        run: zip -r firefox.zip extension/dist/
+
+      # Publish on tag push only
+
+      - name: Publish to Web Store (Chrome)
+        if: github.event_name == 'push'
+        run: npx chrome-webstore-upload-cli@latest --source chrome.zip --extension-id ${{ secrets.CHROME_EXTENSION_ID }}
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+
+      - name: Sign & submit (FireFox)
+        if: github.event_name == 'push'
+        run: |
+          npx web-ext sign \
+            --source-dir extension/dist \
+            --api-key ${{ secrets.FIREFOX_API_ISSUER }} \
+            --api-secret ${{ secrets.FIREFOX_API_SECRET }} \
+            --channel listed
+
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        run: |
+          gh release create "$GITHUB_REF_NAME" chrome.zip firefox.zip \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+          || gh release upload "$GITHUB_REF_NAME" chrome.zip firefox.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Nightly release (dispatch only)
+
+      - name: Delete existing nightly release
+        if: github.event_name == 'workflow_dispatch'
+        run: gh release delete nightly --yes --cleanup-tag || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload nightly release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          gh release create nightly chrome.zip firefox.zip \
+            --title "Nightly" \
+            --notes "Latest build from commit ${{ github.sha }}" \
+            --prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
