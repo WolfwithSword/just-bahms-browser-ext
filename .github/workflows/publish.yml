@@ -33,7 +33,7 @@ jobs:
           mv tmp.json extension/dist/manifest.json
 
       - name: Zip Chrome dist
-        run: zip -r chrome.zip extension/dist/
+        run: (cd extension/dist && zip -r ../../chrome.zip .)
 
       - name: Build (Firefox)
         run: cd extension && node build.js firefox
@@ -46,7 +46,7 @@ jobs:
           mv tmp.json extension/dist/manifest.json
 
       - name: Zip Firefox dist
-        run: zip -r firefox.zip extension/dist/
+        run: (cd extension/dist && zip -r ../../firefox.zip .)
 
       # Publish on tag push only
 
