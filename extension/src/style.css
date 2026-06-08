@@ -379,6 +379,7 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
+  text-transform: capitalize;
 }
 
 .bahms-fish-name {
@@ -388,6 +389,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: capitalize;
 }
 
 .bahms-fish-recent-pip {
