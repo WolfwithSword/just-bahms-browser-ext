@@ -1,3 +1,10 @@
+### Install
+
+- [Chrome](https://chromewebstore.google.com/detail/aglcbapbpafaehmpkmeknmoolmeecnee)
+- [FireFox](https://addons.mozilla.org/en-US/firefox/addon/b-a-h-m-s-user-info/)
+- Unpacked: Download the zip from the latest release
+
+
 ### Building the extension
 
 _Use Node v22.14.0_
