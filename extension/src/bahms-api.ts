@@ -82,6 +82,27 @@ export async function fetchBahmsCaughtFish(login: string): Promise<BahmsCaughtFi
   }
 }
 
+export interface BahmsPlayerRod {
+  id: number;
+  "acquired-at": string;
+  rarity: "UNSET" | "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  lure: number;
+  hook: number;
+  line: number;
+  // attributes: ("SPEEDY" | "POISON" | "LIGHTNING" | "WIGGLY" | "UNKNOWN")[];
+  attributes: string[];
+}
+
+export async function fetchBahmsPlayerRods(login: string): Promise<BahmsPlayerRod[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/v1/fishing/${encodeURIComponent(login)}/rods`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchBahmsDuels(login: string): Promise<BahmsDuel[]> {
   try {
     const res = await fetch(`${BASE_URL}/v1/user/${encodeURIComponent(login)}/duels-test`);
