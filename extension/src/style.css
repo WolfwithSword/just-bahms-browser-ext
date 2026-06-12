@@ -466,6 +466,14 @@
   width: fit-content;
 }
 
+.bahms-rod-popover-rarity-plus {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
 .bahms-rod-popover-date {
   font-size: 10px;
   color: color-mix(in srgb, var(--deadff), transparent 30%);
@@ -565,7 +573,7 @@
 
 .bahms-rods-more-btn:hover {
   background: color-mix(in srgb, var(--deadff), transparent 92%);
-  color: #deadff;
+  color: var(--deadff);
 }
 
 .bahms-fish-list {
@@ -641,6 +649,13 @@
   font-size: 9px;
   flex-shrink: 0;
   opacity: 0.7;
+}
+
+.bahms-fish-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
 }
 
 .bahms-rarity-badge {
@@ -751,6 +766,17 @@
   image-rendering: pixelated;
 }
 
+.bahms-fish-img-popover-id {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-size: 8px;
+  font-family: monospace;
+  color: rgba(232, 224, 255, 0.5);
+  line-height: 1;
+  pointer-events: none;
+}
+
 /* Badge popover thing */
 .bahms-badge-popover {
   position: fixed;
@@ -802,4 +828,227 @@
   font-size: 10px;
   color: color-mix(in srgb, var(--deadff), transparent 62%);
   text-align: center;
+}
+
+.bahms-fish-img-popover-name {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(232, 224, 255, 0.7);
+  text-align: center;
+  margin-top: 3px;
+  text-transform: capitalize;
+}
+
+.bahms-subpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bahms-subtabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.bahms-subtab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: color-mix(in srgb, var(--deadff), transparent 60%);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px 3px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.bahms-subtab-btn:hover {
+  color: var(--deadff);
+}
+
+.bahms-subtab-btn.bahms-subtab-active {
+  color: var(--deadff);
+  border-bottom-color: var(--deadff);
+}
+
+.bahms-spinner-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+}
+
+/* rod rarity +N display */
+.bahms-rod-rarity-plus {
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.8;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bahms-fishing-fish-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.bahms-fish-env-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bahms-fish-env-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.bahms-fish-env-line {
+  flex: 1;
+  border-top: 1px solid;
+  opacity: 0.3;
+}
+
+.bahms-fish-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.bahms-fish-grid-item {
+  display: inline-flex;
+  border-radius: 3px;
+  padding: 2px;
+  transition: background 0.1s;
+}
+
+.bahms-fish-grid-item:hover {
+  background: color-mix(in srgb, var(--deadff), transparent 90%);
+}
+
+.bahms-fish-grid-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+.bahms-fish-grid-img--silhouette {
+  filter: brightness(0);
+  opacity: 0.45;
+}
+
+/* Bait panel */
+.bahms-fishing-bait-panel {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.bahms-bait-list {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 6px;
+}
+
+.bahms-bait-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: #e8e0ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.bahms-bait-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.bahms-bait-desc {
+  font-size: 10px;
+  color: color-mix(in srgb, var(--deadff), transparent 55%);
+}
+
+.bahms-rod-detail-stats {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 4px;
+}
+
+.bahms-rod-detail-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--deadff);
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  flex: 1;
+  transition: background 0.1s;
+}
+
+.bahms-rod-detail-stat-box:hover {
+  background: color-mix(in srgb, var(--deadff), transparent 91%);
+}
+
+.bahms-rod-detail-stat-box--static {
+  cursor: default;
+}
+
+.bahms-rod-detail-stat-box--static:hover {
+  background: transparent;
+}
+
+.bahms-rod-detail-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: color-mix(in srgb, var(--deadff), transparent 45%);
+}
+
+.bahms-rod-detail-stat-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8e0ff;
+  font-family: monospace;
+}
+
+.bahms-rod-detail-popover {
+  position: fixed;
+  background: #1a1b28;
+  border: 1px solid color-mix(in srgb, var(--deadff), transparent 60%);
+  border-radius: 6px;
+  padding: 8px 10px;
+  z-index: 99999;
+  max-width: 160px;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--deadff), transparent 25%);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+  pointer-events: none;
+}
+
+.bahms-rod-detail-popover.active {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }

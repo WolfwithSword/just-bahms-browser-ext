@@ -3,6 +3,8 @@ import {
   fetchBahmsCaughtFish,
   fetchBahmsDuels,
   fetchBahmsPlayerRods,
+  fetchAllFish,
+  fetchAllBait,
   populateCacheFromUser,
   getCachedDisplayName,
   resolveBahmsDisplayName,
@@ -10,12 +12,14 @@ import {
   BahmsBadge,
   BahmsCaughtFish,
   BahmsFish,
+  BahmsBaitItem,
   BahmsDuel,
   BahmsPlayerRod,
+  BahmsRarity,
 } from "./bahms-api";
 import * as Config from "./config";
 
-const RARITIES: Record<string, { color: string; order: number; abbr: string }> = {
+const RARITIES: Record<BahmsRarity, { color: string; order: number; abbr: string }> = {
   UNSET:     { color: "#555",     order: 0, abbr: "UN" },
   COMMON:    { color: "#9e9e9e",  order: 1, abbr: "CM" },
   UNCOMMON:  { color: "#66bb6a",  order: 2, abbr: "UC" },
@@ -26,7 +30,16 @@ const RARITIES: Record<string, { color: string; order: number; abbr: string }> =
 
 const RARITY_DEFAULT = { color: "#555", order: -1, abbr: "??" };
 
+const ENVIRONMENTS: Record<string, { color: string; abbr: string; name: string }> = {
+  UNSET:      { color: "#555",    abbr: "??", name: "Unknown"    },
+  FRESHWATER: { color: "#4fc3f7", abbr: "FW", name: "Freshwater" },
+  SALTWATER:  { color: "#1d6ac2", abbr: "SW", name: "Saltwater"  },
+  ABYSS:      { color: "#5d0fda", abbr: "AB", name: "Abyss"      },
+};
+const ENV_DEFAULT = { color: "#555", abbr: "??", name: "Unknown" };
+
 const ROD_ATTRIBUTES: Record<string, { color: string; tooltip: string }> = {
+  // soon table with descriptions?
   SPEEDY:    { color: "#ffd700", tooltip: "" },
   POISON:    { color: "#66bb6a", tooltip: "" },
   LIGHTNING: { color: "#88ccff", tooltip: "" },
@@ -105,15 +118,24 @@ function getFishImgPopover(): HTMLElement {
     fishImgPopoverInstance.classList.add("bahms-fish-img-popover");
     const img = document.createElement("img");
     img.classList.add("bahms-fish-img-popover-img");
-    fishImgPopoverInstance.appendChild(img);
+    const idEl = document.createElement("span");
+    idEl.classList.add("bahms-fish-img-popover-id");
+    const nameEl = document.createElement("div");
+    nameEl.classList.add("bahms-fish-img-popover-name");
+    fishImgPopoverInstance.append(img, idEl, nameEl);
     document.body.appendChild(fishImgPopoverInstance);
   }
   return fishImgPopoverInstance;
 }
 
-function showFishImgPopover(anchorEl: HTMLElement, src: string): void {
+function showFishImgPopover(anchorEl: HTMLElement, src: string, fishId: number | null, fishName?: string, silhouette = false): void {
   const pop = getFishImgPopover();
-  pop.querySelector<HTMLImageElement>(".bahms-fish-img-popover-img")!.src = src;
+  const imgEl = pop.querySelector<HTMLImageElement>(".bahms-fish-img-popover-img")!;
+  imgEl.src = src;
+  imgEl.style.filter = silhouette ? "brightness(0)" : "";
+  pop.querySelector<HTMLElement>(".bahms-fish-img-popover-id")!.textContent = fishId !== null ? `#${fishId}` : "";
+  const nameEl = pop.querySelector<HTMLElement>(".bahms-fish-img-popover-name");
+  if (nameEl) nameEl.textContent = fishName ?? "";
   pop.classList.add("active");
   const rect = anchorEl.getBoundingClientRect();
   const popRect = pop.getBoundingClientRect();
@@ -131,6 +153,43 @@ function showFishImgPopover(anchorEl: HTMLElement, src: string): void {
 
 function hideFishImgPopover(): void {
   fishImgPopoverInstance?.classList.remove("active");
+}
+
+let rodDetailPopoverInstance: HTMLElement | null = null;
+function getRodDetailPopover(): HTMLElement {
+  if (!rodDetailPopoverInstance) {
+    rodDetailPopoverInstance = document.createElement("div");
+    rodDetailPopoverInstance.classList.add("bahms-rod-detail-popover");
+    const desc = document.createElement("div");
+    desc.classList.add("bahms-rod-detail-popover-desc");
+    rodDetailPopoverInstance.appendChild(desc);
+    document.body.appendChild(rodDetailPopoverInstance);
+    document.addEventListener("click", (e) => {
+      if (rodDetailPopoverInstance?.classList.contains("active") && !rodDetailPopoverInstance.contains(e.target as Node)) {
+        rodDetailPopoverInstance.classList.remove("active");
+      }
+    });
+  }
+  return rodDetailPopoverInstance;
+}
+
+function showRodDetailPopover(anchorEl: HTMLElement, description: string): void {
+  const pop = getRodDetailPopover();
+  pop.querySelector<HTMLElement>(".bahms-rod-detail-popover-desc")!.textContent = description || "No description available.";
+  pop.classList.add("active");
+
+  const rect = anchorEl.getBoundingClientRect();
+  const popRect = pop.getBoundingClientRect();
+  const gap = 6;
+  let left = rect.left + rect.width / 2 - popRect.width / 2;
+  let top = rect.top - popRect.height - gap;
+
+  if (top < 4) top = rect.bottom + gap;
+  if (left + popRect.width > window.innerWidth - 4) left = window.innerWidth - popRect.width - 4;
+  if (left < 4) left = 4;
+
+  pop.style.left = `${left}px`;
+  pop.style.top = `${top}px`;
 }
 
 let rodPopoverInstance: HTMLElement | null = null;
@@ -167,6 +226,14 @@ function showRodPopover(anchorEl: HTMLElement, rod: BahmsPlayerRod, history: Bah
   rarityBig.style.color = rarityColor;
   rarityBig.style.borderColor = rarityColor;
   rarityCol.appendChild(rarityBig);
+
+  const rarityOrder = (RARITIES[rod.rarity] ?? RARITY_DEFAULT).order;
+  if (rarityOrder > 0) {
+    const plusEl = el("div", "bahms-rod-popover-rarity-plus", `+${rarityOrder}`);
+    plusEl.style.color = rarityColor;
+    rarityCol.appendChild(plusEl);
+  }
+
   headerRow.appendChild(rarityCol);
 
   const dateCol = document.createElement("div");
@@ -563,6 +630,224 @@ function buildDuelsPanel(user: BahmsUser, duels: BahmsDuel[]): HTMLElement {
 
 function buildFishingPanel(caughtFish: BahmsCaughtFish[], rods: BahmsPlayerRod[]): HTMLElement {
   const panel = document.createElement("div");
+  const subTabBar = document.createElement("div");
+  subTabBar.classList.add("bahms-subtabs");
+  const subPanelWrap = document.createElement("div");
+  subPanelWrap.classList.add("bahms-subpanels");
+  const subDefs: { label: string; key: string; build: () => HTMLElement }[] = [
+    { label: "Profile", key: "profile", build: () => buildFishingProfilePanel(caughtFish, rods) },
+    { label: "Fish",    key: "fish",    build: () => buildFishingFishPanel(caughtFish) },
+    { label: "Bait",   key: "bait",    build: () => buildFishingBaitPanel() },
+    { label: "Rods",   key: "rods",    build: () => buildFishingRodsPanel(rods) },
+  ];
+
+  const builtPanels: HTMLElement[] = [];
+  for (const def of subDefs) {
+    const btn = document.createElement("button");
+    btn.classList.add("bahms-subtab-btn");
+    btn.dataset.subtab = def.key;
+    btn.textContent = def.label;
+    subTabBar.appendChild(btn);
+    const p = def.build();
+    p.classList.add("bahms-subpanel");
+    p.dataset.subpanel = def.key;
+    if (def.key !== "profile") p.classList.add("bahms-hidden");
+    subPanelWrap.appendChild(p);
+    builtPanels.push(p);
+  }
+
+  (subTabBar.firstElementChild as HTMLElement).classList.add("bahms-subtab-active");
+  subTabBar.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>(".bahms-subtab-btn");
+    if (!btn?.dataset.subtab) return;
+    subTabBar.querySelectorAll(".bahms-subtab-btn").forEach(b => b.classList.remove("bahms-subtab-active"));
+    btn.classList.add("bahms-subtab-active");
+    builtPanels.forEach(p => p.classList.toggle("bahms-hidden", p.dataset.subpanel !== btn.dataset.subtab));
+  });
+
+  panel.append(subTabBar, subPanelWrap);
+  return panel;
+}
+
+function buildFishingFishPanel(caughtFish: BahmsCaughtFish[]): HTMLElement {
+  const panel = document.createElement("div");
+  panel.classList.add("bahms-fishing-fish-panel");
+  const spinnerWrap = document.createElement("div");
+  spinnerWrap.classList.add("bahms-spinner-wrap");
+  const spinner = document.createElement("div");
+  spinner.classList.add("bahms-spinner");
+  spinnerWrap.appendChild(spinner);
+  panel.appendChild(spinnerWrap);
+  const caughtIds = new Set(caughtFish.map(c => c.fish.id));
+
+  fetchAllFish().then(allFish => {
+    panel.innerHTML = "";
+    if (allFish.length === 0) {
+      panel.appendChild(el("div", "bahms-empty", "No fish data available"));
+      return;
+    }
+    const totalCaught = allFish.filter(f => caughtIds.has(f.id)).length;
+    const totalRow = document.createElement("div");
+
+    totalRow.classList.add("bahms-section-label-row");
+    totalRow.appendChild(el("div", "bahms-section-label", "All Fish"));
+    totalRow.appendChild(el("span", "bahms-fish-count", `${totalCaught}/${allFish.length}`));
+    panel.appendChild(totalRow);
+
+    const ENV_ORDER = ["FRESHWATER", "SALTWATER", "ABYSS", "UNSET"] as const;
+    const byEnv = new Map<string, BahmsFish[]>();
+
+    for (const fish of allFish) {
+      const env = fish.environment || "UNSET";
+      if (!byEnv.has(env)) byEnv.set(env, []);
+      byEnv.get(env)!.push(fish);
+    }
+
+    for (const env of ENV_ORDER) {
+      const fishInEnv = byEnv.get(env);
+      if (!fishInEnv?.length) continue;
+
+      const envEntry = ENVIRONMENTS[env] ?? ENV_DEFAULT;
+      const envCaught = fishInEnv.filter(f => caughtIds.has(f.id)).length;
+      const sectionHeader = document.createElement("div");
+      sectionHeader.classList.add("bahms-fish-env-header");
+      const envLabel = el("span", "bahms-fish-env-label", envEntry.name);
+      envLabel.style.color = envEntry.color;
+      const line = document.createElement("div");
+      line.classList.add("bahms-fish-env-line");
+      line.style.borderTopColor = envEntry.color;
+      const envCount = el("span", "bahms-fish-count", `${envCaught}/${fishInEnv.length}`);
+      sectionHeader.append(envLabel, line, envCount);
+      panel.appendChild(sectionHeader);
+      const caught = fishInEnv.filter(f => caughtIds.has(f.id));
+      const uncaught = fishInEnv.filter(f => !caughtIds.has(f.id));
+      const grid = document.createElement("div");
+      grid.classList.add("bahms-fish-grid");
+
+      for (const fish of [...caught, ...uncaught]) {
+        const isCaught = caughtIds.has(fish.id);
+        const item = document.createElement("div");
+        item.classList.add("bahms-fish-grid-item");
+        const img = document.createElement("img");
+        img.src = `data:image/png;base64,${fish["img-base64"]}`;
+        img.classList.add("bahms-fish-grid-img");
+        img.alt = isCaught ? fish.name : "???";
+        if (!isCaught) img.classList.add("bahms-fish-grid-img--silhouette");
+        if (isCaught) {
+          img.addEventListener("mouseenter", () => showFishImgPopover(img, img.src, fish.id, fish.name));
+          img.addEventListener("mouseleave", hideFishImgPopover);
+        } else {
+          img.addEventListener("mouseenter", () => showFishImgPopover(img, img.src, null, "???", true));
+          img.addEventListener("mouseleave", hideFishImgPopover);
+        }
+        item.appendChild(img);
+        grid.appendChild(item);
+      }
+
+      panel.appendChild(grid);
+    }
+  });
+  return panel;
+}
+
+function buildFishingBaitPanel(): HTMLElement {
+  const panel = document.createElement("div");
+  panel.classList.add("bahms-fishing-bait-panel");
+  const spinnerWrap = document.createElement("div");
+  spinnerWrap.classList.add("bahms-spinner-wrap");
+  const spinner = document.createElement("div");
+  spinner.classList.add("bahms-spinner");
+  spinnerWrap.appendChild(spinner);
+  panel.appendChild(spinnerWrap);
+
+  fetchAllBait().then((allBait: BahmsBaitItem[]) => {
+    panel.innerHTML = "";
+
+    if (allBait.length === 0) {
+      panel.appendChild(el("div", "bahms-empty", "No bait available"));
+      return;
+    }
+
+    const list = document.createElement("div");
+    list.classList.add("bahms-bait-list");
+
+    for (const bait of allBait) {
+      const img = document.createElement("img");
+      img.src = `data:image/png;base64,${bait["img-base64"]}`;
+      img.classList.add("bahms-bait-img");
+      img.alt = bait.name;
+
+      const nameEl = el("div", "bahms-bait-name", bait.name);
+      const rarityColor = (RARITIES[bait.rarity] ?? RARITY_DEFAULT).color;
+      const rarityBadge = el("span", "bahms-rarity-badge", bait.rarity);
+
+      rarityBadge.style.color = rarityColor;
+      rarityBadge.style.borderColor = rarityColor;
+      list.append(img, nameEl, rarityBadge);
+    }
+    panel.appendChild(list);
+  });
+  return panel;
+}
+
+function buildFishingRodsPanel(rods: BahmsPlayerRod[]): HTMLElement {
+  const panel = document.createElement("div");
+  if (rods.length === 0) {
+    panel.appendChild(el("div", "bahms-empty", "No rods owned"));
+    return panel;
+  }
+
+  const current = [...rods].sort((a, b) => new Date(b["acquired-at"]).getTime() - new Date(a["acquired-at"]).getTime())[0];
+  appendSectionLabel(panel, "Stats");
+  const statsRow = document.createElement("div");
+  statsRow.classList.add("bahms-rod-detail-stats");
+  const statVals: Record<string, number> = { HOOK: current.hook, LURE: current.lure, LINE: current.line };
+  
+  for (const lbl of ["HOOK", "LURE", "LINE"]) {
+    const box = document.createElement("div");
+    box.classList.add("bahms-rod-detail-stat-box");
+    box.append(el("div", "bahms-rod-detail-stat-label", lbl), el("div", "bahms-rod-detail-stat-val", String(statVals[lbl])));
+    box.addEventListener("click", (e) => { e.stopPropagation(); showRodDetailPopover(box, ROD_STAT_TOOLTIPS[lbl] ?? ""); });
+    statsRow.appendChild(box);
+  }
+
+  const rarityColor = (RARITIES[current.rarity] ?? RARITY_DEFAULT).color;
+  const rarityOrder = (RARITIES[current.rarity] ?? RARITY_DEFAULT).order;
+  const rarityBox = document.createElement("div");
+  rarityBox.classList.add("bahms-rod-detail-stat-box", "bahms-rod-detail-stat-box--static");
+  rarityBox.style.borderColor = rarityColor;
+  const rarityLbl = el("div", "bahms-rod-detail-stat-label", current.rarity);
+  rarityLbl.style.color = rarityColor;
+  const rarityVal = el("div", "bahms-rod-detail-stat-val", rarityOrder > 0 ? `+${rarityOrder}` : "-");
+  
+  rarityVal.style.color = rarityColor;
+  rarityBox.append(rarityLbl, rarityVal);
+  statsRow.appendChild(rarityBox);
+  panel.appendChild(statsRow);
+  appendSectionLabel(panel, "Attributes");
+  const attrsRow = document.createElement("div");
+  attrsRow.classList.add("bahms-rod-attrs-row");
+
+  for (const attr of Object.keys(ROD_ATTRIBUTES).filter(a => a !== "UNKNOWN")) {
+    const hasAttr = current.attributes.includes(attr);
+    const ac = (ROD_ATTRIBUTES[attr] ?? ROD_ATTR_DEFAULT).color;
+    const chip = el("span", "bahms-rod-attr-chip", attr);
+    chip.style.color = ac;
+    chip.style.borderColor = ac;
+    chip.style.cursor = "pointer";
+
+    if (!hasAttr) chip.style.opacity = "0.18";
+    
+    chip.addEventListener("click", (e) => { e.stopPropagation(); showRodDetailPopover(chip, ""); });
+    attrsRow.appendChild(chip);
+  }
+
+  panel.appendChild(attrsRow);
+  return panel;
+}
+
+function buildFishingProfilePanel(caughtFish: BahmsCaughtFish[], rods: BahmsPlayerRod[]): HTMLElement {
+  const panel = document.createElement("div");
   appendSectionLabel(panel, "Your Rod");
   panel.appendChild(buildRodSection(rods));
 
@@ -617,7 +902,7 @@ function buildFishingPanel(caughtFish: BahmsCaughtFish[], rods: BahmsPlayerRod[]
     icon.src = `data:image/png;base64,${group.fish["img-base64"]}`;
     icon.classList.add("bahms-fish-icon");
     icon.alt = group.fish.name;
-    icon.addEventListener("mouseenter", () => showFishImgPopover(icon, icon.src));
+    icon.addEventListener("mouseenter", () => showFishImgPopover(icon, icon.src, group.fish.id, group.fish.name));
     icon.addEventListener("mouseleave", hideFishImgPopover);
 
     const info = document.createElement("div");
@@ -627,6 +912,11 @@ function buildFishingPanel(caughtFish: BahmsCaughtFish[], rods: BahmsPlayerRod[]
     rarityBadge.style.color = rarityColor;
     rarityBadge.style.borderColor = rarityColor;
 
+    const envEntry = ENVIRONMENTS[group.fish.environment] ?? ENV_DEFAULT;
+    const envBadge = el("span", "bahms-rarity-badge", envEntry.abbr);
+    envBadge.style.color = envEntry.color;
+    envBadge.style.borderColor = envEntry.color;
+
     const nameRow = document.createElement("div");
     nameRow.classList.add("bahms-fish-name-row");
     nameRow.appendChild(el("span", "bahms-fish-name", group.fish.name));
@@ -635,7 +925,11 @@ function buildFishingPanel(caughtFish: BahmsCaughtFish[], rods: BahmsPlayerRod[]
       pip.title = "Most recently caught";
       nameRow.appendChild(pip);
     }
-    info.append(nameRow, rarityBadge);
+
+    const badgesRow = document.createElement("div");
+    badgesRow.classList.add("bahms-fish-badges-row");
+    badgesRow.append(rarityBadge, envBadge);
+    info.append(nameRow, badgesRow);
 
     const count = el("span", "bahms-fish-count", `x${group.catches.length}`);
     const chevron = el("span", "bahms-fish-chevron", "▶"); // chevron chevvy mccheverton
@@ -715,6 +1009,13 @@ function buildRodCard(rod: BahmsPlayerRod): HTMLElement {
   rarityBadge.style.borderColor = rarityColor;
   topRow.appendChild(rarityBadge);
 
+  const rarityOrder = (RARITIES[rod.rarity] ?? RARITY_DEFAULT).order;
+  if (rarityOrder > 0) {
+    const plusEl = el("span", "bahms-rod-rarity-plus", `+${rarityOrder}`);
+    plusEl.style.color = rarityColor;
+    topRow.appendChild(plusEl);
+  }
+
   const statsEl = document.createElement("span");
   statsEl.classList.add("bahms-rod-stats");
   for (const [lbl, val] of [["HOOK", rod.hook], ["LURE", rod.lure], ["LINE", rod.line]] as [string, number][]) {
@@ -763,3 +1064,4 @@ function appendStatRow(parent: HTMLElement, label: string, value: string): void 
 function appendSectionLabel(parent: HTMLElement, text: string): void {
   parent.appendChild(el("div", "bahms-section-label", text));
 }
+
